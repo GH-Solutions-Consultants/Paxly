@@ -19,15 +19,15 @@ var (
 		Short: "Remove a dependency from the project",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Read config
-			data, err := os.ReadFile("pkgmgr.yaml")
+			data, err := os.ReadFile("paxly.yaml")
 			if err != nil {
-				logrus.Fatal(errors.Wrap(err, "failed to read pkgmgr.yaml"))
+				logrus.Fatal(errors.Wrap(err, "failed to read paxly.yaml"))
 			}
 
 			var config core.Config
 			err = yaml.Unmarshal(data, &config)
 			if err != nil {
-				logrus.Fatal(errors.Wrap(err, "failed to parse pkgmgr.yaml"))
+				logrus.Fatal(errors.Wrap(err, "failed to parse paxly.yaml"))
 			}
 
 			// Validate configuration
@@ -68,10 +68,10 @@ var (
 				logrus.Fatal(errors.Wrap(err, "failed to marshal updated configuration"))
 			}
 
-			// Write back to pkgmgr.yaml
-			err = os.WriteFile("pkgmgr.yaml", updatedData, 0644)
+			// Write back to paxly.yaml
+			err = os.WriteFile("paxly.yaml", updatedData, 0644)
 			if err != nil {
-				logrus.Fatal(errors.Wrap(err, "failed to write updated pkgmgr.yaml"))
+				logrus.Fatal(errors.Wrap(err, "failed to write updated paxly.yaml"))
 			}
 
 			logrus.Infof("Successfully removed dependency '%s' from language '%s'", removeName, removeLanguage)

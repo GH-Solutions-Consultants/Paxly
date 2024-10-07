@@ -17,15 +17,15 @@ var listCmd = &cobra.Command{
 	Short: "List all installed dependencies",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Read config
-		data, err := os.ReadFile("pkgmgr.yaml")
+		data, err := os.ReadFile("paxly.yaml")
 		if err != nil {
-			logrus.Fatal(errors.Wrap(err, "failed to read pkgmgr.yaml"))
+			logrus.Fatal(errors.Wrap(err, "failed to read paxly.yaml"))
 		}
 
 		var config core.Config
 		err = yaml.Unmarshal(data, &config)
 		if err != nil {
-			logrus.Fatal(errors.Wrap(err, "failed to parse pkgmgr.yaml"))
+			logrus.Fatal(errors.Wrap(err, "failed to parse paxly.yaml"))
 		}
 
 		// Validate configuration

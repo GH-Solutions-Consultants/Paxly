@@ -21,15 +21,15 @@ var addCmd = &cobra.Command{
 	Short: "Add a new dependency to the project",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Read existing config
-		data, err := os.ReadFile("pkgmgr.yaml")
+		data, err := os.ReadFile("paxly.yaml")
 		if err != nil {
-			logrus.Fatalf("Failed to read pkgmgr.yaml: %v", err)
+			logrus.Fatalf("Failed to read paxly.yaml: %v", err)
 		}
 
 		var config core.Config
 		err = yaml.Unmarshal(data, &config)
 		if err != nil {
-			logrus.Fatalf("Failed to parse pkgmgr.yaml: %v", err)
+			logrus.Fatalf("Failed to parse paxly.yaml: %v", err)
 		}
 
 		// Validate inputs
@@ -57,10 +57,10 @@ var addCmd = &cobra.Command{
 			logrus.Fatalf("Failed to marshal updated configuration: %v", err)
 		}
 
-		// Write back to pkgmgr.yaml
-		err = os.WriteFile("pkgmgr.yaml", newData, 0644)
+		// Write back to paxly.yaml
+		err = os.WriteFile("paxly.yaml", newData, 0644)
 		if err != nil {
-			logrus.Fatalf("Failed to write updated pkgmgr.yaml: %v", err)
+			logrus.Fatalf("Failed to write updated paxly.yaml: %v", err)
 		}
 
 		logrus.Infof("Added dependency '%s' version '%s' to language '%s' in development environment.", addName, addVersion, addLanguage)

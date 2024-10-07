@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// InitializeProject initializes a new pkgmgr project by creating a pkgmgr.yaml file.
+// InitializeProject initializes a new paxly project by creating a paxly.yaml file.
 func InitializeProject(name, version, description string, authors []string) error {
 	if name == "" {
 		return fmt.Errorf("project name is required")
@@ -43,10 +43,10 @@ func InitializeProject(name, version, description string, authors []string) erro
 			},
 		},
 		TrustedSources: map[string][]string{
-			"python":      {"https://pypi.org/simple"},
-			"javascript":  {"https://registry.npmjs.org/"},
-			"go":          {"https://proxy.golang.org/"},
-			"rust":        {"https://crates.io/"},
+			"python":     {"https://pypi.org/simple"},
+			"javascript": {"https://registry.npmjs.org/"},
+			"go":         {"https://proxy.golang.org/"},
+			"rust":       {"https://crates.io/"},
 		},
 	}
 
@@ -55,16 +55,16 @@ func InitializeProject(name, version, description string, authors []string) erro
 		return errors.Wrap(err, "failed to marshal configuration")
 	}
 
-	if _, err := os.Stat("pkgmgr.yaml"); err == nil {
-		return fmt.Errorf("pkgmgr.yaml already exists")
+	if _, err := os.Stat("paxly.yaml"); err == nil {
+		return fmt.Errorf("paxly.yaml already exists")
 	}
 
-	err = os.WriteFile("pkgmgr.yaml", data, 0644)
+	err = os.WriteFile("paxly.yaml", data, 0644)
 	if err != nil {
-		return errors.Wrap(err, "failed to write pkgmgr.yaml")
+		return errors.Wrap(err, "failed to write paxly.yaml")
 	}
 
-	logrus.Info("Initialized pkgmgr project with pkgmgr.yaml")
+	logrus.Info("Initialized paxly project with paxly.yaml")
 
 	// Validate the config
 	if err := config.Validate(); err != nil {

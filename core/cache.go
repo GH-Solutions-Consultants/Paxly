@@ -11,7 +11,7 @@ import (
 
 // CacheDependency caches the downloaded package data.
 func CacheDependency(dep Dependency, data io.Reader) error {
-	cacheDir := "pkgmgr_cache"
+	cacheDir := "paxly_cache"
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		if err := os.Mkdir(cacheDir, 0755); err != nil {
 			return err

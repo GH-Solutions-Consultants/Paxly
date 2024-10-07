@@ -15,7 +15,7 @@ var (
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize a new pkgmgr project",
+	Short: "Initialize a new paxly project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := core.InitializeProject(projectName, projectVersion, projectDescription, projectAuthors)
 		if err != nil {

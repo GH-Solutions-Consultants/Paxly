@@ -10,9 +10,9 @@ var (
 	verbose bool
 	debug   bool
 	rootCmd = &cobra.Command{
-		Use:   "pkgmgr",
-		Short: "pkgmgr is a multi-language package manager",
-		Long: `pkgmgr is a versatile package manager supporting multiple programming languages.
+		Use:   "paxly",
+		Short: "paxly is a multi-language package manager",
+		Long: `paxly is a versatile package manager supporting multiple programming languages.
 It allows you to manage dependencies across different languages seamlessly.`,
 	}
 )

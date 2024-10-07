@@ -37,7 +37,7 @@ jobs:
       run: go test ./... -v
 
     - name: Build
-      run: go build -o pkgmgr
+      run: go build -o paxly
 
     - name: Upload Coverage
       uses: actions/upload-artifact@v3
