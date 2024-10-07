@@ -124,7 +124,6 @@ func (p *GoPlugin) Update(deps []core.Dependency) error {
 
 // Remove removes the specified Go dependency.
 func (p *GoPlugin) Remove(dep core.Dependency) error {
-	pkgStr := dep.Name
 	logrus.WithFields(logrus.Fields{
 		"dependency": dep.Name,
 	}).Info("Removing Go package")

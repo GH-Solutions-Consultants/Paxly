@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/GH-Solutions-Consultants/Paxly/core"
 	"github.com/GH-Solutions-Consultants/Paxly/plugins/python"
+	"github.com/stretchr/testify/mock" // Add this if you're using mock
+)
 
 // MockExecutor is a mock for executing commands.
 type MockExecutor struct {

@@ -2,7 +2,6 @@
 package python
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"

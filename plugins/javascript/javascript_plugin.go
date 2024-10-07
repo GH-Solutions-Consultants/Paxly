@@ -195,6 +195,7 @@ func (p *JavaScriptPlugin) GetTransitiveDependencies(depName, version string) ([
 		return nil, fmt.Errorf("failed to list dependencies for '%s': %v", depName, err)
 	}
 
+	// Define the structure for parsing the npm ls output
 	var lsOutput struct {
 		Dependencies map[string]struct {
 			Version         string                 `json:"version"`
@@ -203,21 +204,25 @@ func (p *JavaScriptPlugin) GetTransitiveDependencies(depName, version string) ([
 		} `json:"dependencies"`
 	}
 
+	// Unmarshal the JSON output from the npm ls command
 	if err := json.Unmarshal(output, &lsOutput); err != nil {
 		return nil, fmt.Errorf("failed to parse npm ls output: %v", err)
 	}
 
+	// Collect transitive dependencies
 	transDeps := []core.Dependency{}
-	if deps, ok := lsOutput.Dependencies[depName].Dependencies; ok {
-		for name, info := range deps {
-			version, ok := info.(map[string]interface{})["version"].(string)
-			if !ok {
-				continue
+	if depEntry, ok := lsOutput.Dependencies[depName]; ok {
+		if deps := depEntry.Dependencies; deps != nil {
+			for name, info := range deps {
+				version, ok := info.(map[string]interface{})["version"].(string)
+				if !ok {
+					continue
+				}
+				transDeps = append(transDeps, core.Dependency{
+					Name:    name,
+					Version: "=" + version,
+				})
 			}
-			transDeps = append(transDeps, core.Dependency{
-				Name:    name,
-				Version: "=" + version,
-			})
 		}
 	}
 
