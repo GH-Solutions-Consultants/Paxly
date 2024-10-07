@@ -45,10 +45,10 @@ func (p *PythonPlugin) Language() string {
 func (p *PythonPlugin) Initialize(config core.Config) error {
 	logrus.Info("Initializing Python plugin...")
 	// Validate Python installation
-	if _, err := p.executor.Run(&core.Command{Name: "python3", Args: []string{"--version"}}); err != nil {
+	if err := p.executor.Run(&core.Command{Name: "python3", Args: []string{"--version"}}); err != nil {
 		return fmt.Errorf("python3 is not installed or not in PATH")
 	}
-	if _, err := p.executor.Run(&core.Command{Name: p.getPipPath(), Args: []string{"--version"}}); err != nil {
+	if err := p.executor.Run(&core.Command{Name: p.getPipPath(), Args: []string{"--version"}}); err != nil {
 		return fmt.Errorf("pip is not installed or not in PATH")
 	}
 	// Ensure pipdeptree is installed
@@ -108,7 +108,8 @@ func (p *PythonPlugin) Install(deps []core.Dependency) error {
 			Name: p.getPipPath(),
 			Args: []string{"install", pkgStr},
 		}
-		if err := p.executor.Run(cmd); err != nil {
+		err := p.executor.Run(cmd) // Changed from output, err :=
+		if err != nil {
 			logrus.Errorf("Failed to install Python package '%s': %v", dep.Name, err)
 			return err
 		}
@@ -220,28 +221,27 @@ func (p *PythonPlugin) ListVersions(depName string) ([]string, error) {
 		Name: p.getPipPath(),
 		Args: []string{"install", fmt.Sprintf("%s==random", depName)}, // Intentional error to get available versions
 	}
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	err := p.executor.Run(cmd)
+
+	output, err := p.executor.Output(cmd)
 	if err == nil {
 		return nil, fmt.Errorf("expected failure when listing versions")
 	}
 
-	output := stderr.String()
+	outputStr := string(output)
 	// Parse available versions from error message
 	versions := []string{}
 	prefix := "(from versions:"
 	suffix := ")"
-	start := strings.Index(output, prefix)
+	start := strings.Index(outputStr, prefix)
 	if start == -1 {
 		return nil, fmt.Errorf("failed to parse available versions")
 	}
 	start += len(prefix)
-	end := strings.Index(output[start:], suffix)
+	end := strings.Index(outputStr[start:], suffix)
 	if end == -1 {
 		return nil, fmt.Errorf("failed to parse available versions")
 	}
-	versionStr := output[start : start+end]
+	versionStr := outputStr[start : start+end]
 	versionParts := strings.Split(versionStr, ",")
 	for _, v := range versionParts {
 		v = strings.TrimSpace(v)
