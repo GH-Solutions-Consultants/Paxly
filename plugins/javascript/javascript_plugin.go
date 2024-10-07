@@ -19,6 +19,15 @@ type JavaScriptPlugin struct {
 	executor core.Executor
 }
 
+// Register the JavaScriptPlugin with the PluginRegistry during initialization.
+func init() {
+	plugin := NewJavaScriptPlugin(nil)
+	err := core.GetPluginRegistry().RegisterPlugin(plugin.Language(), plugin)
+	if err != nil {
+		logrus.Fatalf("Failed to register JavaScript plugin: %v", err)
+	}
+}
+
 // NewJavaScriptPlugin creates a new instance of JavaScriptPlugin with the given executor.
 func NewJavaScriptPlugin(executor core.Executor) *JavaScriptPlugin {
 	if executor == nil {

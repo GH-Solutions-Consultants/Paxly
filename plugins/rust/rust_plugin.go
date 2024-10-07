@@ -18,6 +18,15 @@ type RustPlugin struct {
 	executor core.Executor
 }
 
+// Register the RustPlugin with the PluginRegistry during initialization.
+func init() {
+	plugin := NewRustPlugin(nil)
+	err := core.GetPluginRegistry().RegisterPlugin(plugin.Language(), plugin)
+	if err != nil {
+		logrus.Fatalf("Failed to register Rust plugin: %v", err)
+	}
+}
+
 // NewRustPlugin creates a new instance of RustPlugin with the given executor.
 func NewRustPlugin(executor core.Executor) *RustPlugin {
 	if executor == nil {

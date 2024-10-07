@@ -20,6 +20,15 @@ type PythonPlugin struct {
 	executor core.Executor
 }
 
+// Register the PythonPlugin with the PluginRegistry during initialization.
+func init() {
+	plugin := NewPythonPlugin(nil)
+	err := core.GetPluginRegistry().RegisterPlugin(plugin.Language(), plugin)
+	if err != nil {
+		logrus.Fatalf("Failed to register Python plugin: %v", err)
+	}
+}
+
 // NewPythonPlugin creates a new instance of PythonPlugin with the given executor.
 func NewPythonPlugin(executor core.Executor) *PythonPlugin {
 	if executor == nil {
@@ -77,6 +86,14 @@ func (p *PythonPlugin) getPipPath() string {
 	return filepath.Join("venv", "bin", "pip")
 }
 
+// getSafetyPath returns the path to the safety executable, handling cross-platform paths.
+func (p *PythonPlugin) getSafetyPath() string {
+	if core.IsWindows() {
+		return filepath.Join("venv", "Scripts", "safety.exe")
+	}
+	return filepath.Join("venv", "bin", "safety")
+}
+
 // Install installs the specified Python dependencies along with transitive dependencies.
 func (p *PythonPlugin) Install(deps []core.Dependency) error {
 	// Check if virtual environment exists.
@@ -107,7 +124,7 @@ func (p *PythonPlugin) Install(deps []core.Dependency) error {
 			Name: p.getPipPath(),
 			Args: []string{"install", pkgStr},
 		}
-		err := p.executor.Run(cmd) // Changed from output, err :=
+		err := p.executor.Run(cmd)
 		if err != nil {
 			logrus.Errorf("Failed to install Python package '%s': %v", dep.Name, err)
 			return err
@@ -267,25 +284,37 @@ func (p *PythonPlugin) GetTransitiveDependencies(depName, version string) ([]cor
 
 	var transDeps []core.Dependency
 	for _, pkg := range tree {
-		if pkg["package"].(map[string]interface{})["name"] == depName {
-			dependencies, ok := pkg["dependencies"].([]interface{})
+		pkgInfo, ok := pkg["package"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if pkgInfo["name"] != depName {
+			continue
+		}
+		dependencies, ok := pkg["dependencies"].([]interface{})
+		if !ok {
+			continue
+		}
+		for _, d := range dependencies {
+			depMap, ok := d.(map[string]interface{})
 			if !ok {
 				continue
 			}
-			for _, d := range dependencies {
-				depMap, ok := d.(map[string]interface{})
-				if !ok {
-					continue
-				}
-				name := depMap["package"].(map[string]interface{})["name"].(string)
-				version := depMap["package"].(map[string]interface{})["version"].(string)
-				transDeps = append(transDeps, core.Dependency{
-					Name:    name,
-					Version: "=" + version,
-				})
+			packageInfo, ok := depMap["package"].(map[string]interface{})
+			if !ok {
+				continue
 			}
-			break
+			name, okName := packageInfo["name"].(string)
+			version, okVersion := packageInfo["version"].(string)
+			if !okName || !okVersion {
+				continue
+			}
+			transDeps = append(transDeps, core.Dependency{
+				Name:    name,
+				Version: "=" + version,
+			})
 		}
+		break
 	}
 
 	return transDeps, nil
@@ -303,10 +332,10 @@ func (p *PythonPlugin) RunSecurityScan() error {
 		return fmt.Errorf("failed to install 'safety': %v", err)
 	}
 
-	// Run safety check
+	// Run safety check using the absolute path to the safety executable
 	scanCmd := &core.Command{
-		Name: p.getPipPath(),
-		Args: []string{"run", "safety", "check", "--json"},
+		Name: p.getSafetyPath(),
+		Args: []string{"check", "--json"},
 	}
 	scanOutput, err := p.executor.Output(scanCmd)
 	if err != nil {
@@ -333,8 +362,8 @@ func (p *PythonPlugin) RunSecurityScan() error {
 // GetVulnerabilities retrieves security vulnerabilities.
 func (p *PythonPlugin) GetVulnerabilities() ([]core.SecurityVulnerability, error) {
 	cmd := &core.Command{
-		Name: p.getPipPath(),
-		Args: []string{"run", "safety", "check", "--json"},
+		Name: p.getSafetyPath(),
+		Args: []string{"check", "--json"},
 	}
 	scanOutput, err := p.executor.Output(cmd)
 	if err != nil {
@@ -353,7 +382,7 @@ func (p *PythonPlugin) GetVulnerabilities() ([]core.SecurityVulnerability, error
 func (p *PythonPlugin) Cleanup() error {
 	logrus.Info("Cleaning up Python plugin resources...")
 	// Implement any necessary cleanup, such as removing virtual environments
-	// For example:
+	// Example: Uncomment the following line to remove the virtual environment
 	// return os.RemoveAll("venv")
 	return nil
 }

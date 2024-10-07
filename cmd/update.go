@@ -4,11 +4,11 @@ package cmd
 import (
 	"os"
 
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"github.com/GH-Solutions-Consultants/Paxly/core"
-	"gopkg.in/yaml.v2"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -20,15 +20,15 @@ var (
 		Short: "Update a dependency in the project",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Read config
-			data, err := os.ReadFile("pkgmgr.yaml")
+			data, err := os.ReadFile("paxly.yaml") // Changed from "pkgmgr.yaml" to "paxly.yaml"
 			if err != nil {
-				core.LogFatal(errors.Wrap(err, "failed to read pkgmgr.yaml"))
+				core.LogFatal(errors.Wrap(err, "failed to read paxly.yaml"))
 			}
 
 			var config core.Config
 			err = yaml.Unmarshal(data, &config)
 			if err != nil {
-				core.LogFatal(errors.Wrap(err, "failed to parse pkgmgr.yaml"))
+				core.LogFatal(errors.Wrap(err, "failed to parse paxly.yaml"))
 			}
 
 			// Validate configuration
@@ -36,7 +36,7 @@ var (
 				core.LogFatal(errors.Wrap(err, "configuration validation failed"))
 			}
 
-			// Update dependency
+			// Update dependency in the 'development' environment
 			envConfig, exists := config.Environments["development"]
 			if !exists {
 				core.LogFatal(errors.Errorf("environment 'development' does not exist"))
@@ -63,6 +63,7 @@ var (
 				core.LogFatal(errors.Errorf("dependency '%s' not found in language '%s'", updateName, updateLanguage))
 			}
 
+			// Update the dependencies in the environment config
 			config.Environments["development"].Dependencies[updateLanguage] = deps
 
 			// Marshal back to YAML
@@ -71,13 +72,13 @@ var (
 				core.LogFatal(errors.Wrap(err, "failed to marshal updated configuration"))
 			}
 
-			// Write back to pkgmgr.yaml
-			err = os.WriteFile("pkgmgr.yaml", updatedData, 0644)
+			// Write back to paxly.yaml
+			err = os.WriteFile("paxly.yaml", updatedData, 0644) // Changed from "pkgmgr.yaml" to "paxly.yaml"
 			if err != nil {
-				core.LogFatal(errors.Wrap(err, "failed to write updated pkgmgr.yaml"))
+				core.LogFatal(errors.Wrap(err, "failed to write updated paxly.yaml"))
 			}
 
-			// Replace core.LogInfo with logrus.Info
+			// Log the successful update
 			logrus.Infof("Successfully updated dependency '%s' to version '%s' in language '%s'", updateName, updateVersion, updateLanguage)
 		},
 	}
@@ -88,7 +89,7 @@ func init() {
 
 	updateCmd.Flags().StringVarP(&updateLanguage, "language", "l", "", "Programming language of the dependency")
 	updateCmd.Flags().StringVarP(&updateName, "name", "n", "", "Name of the dependency")
-	updateCmd.Flags().StringVarP(&updateVersion, "version", "v", "", "New version constraint of the dependency")
+	updateCmd.Flags().StringVarP(&updateVersion, "version", "r", "", "New version constraint of the dependency") // Changed shorthand from 'v' to 'r'
 	updateCmd.MarkFlagRequired("language")
 	updateCmd.MarkFlagRequired("name")
 	updateCmd.MarkFlagRequired("version")

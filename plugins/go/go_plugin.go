@@ -31,6 +31,15 @@ func NewGoPlugin(executor core.Executor) *GoPlugin {
 	}
 }
 
+// Register the GoPlugin with the PluginRegistry during initialization.
+func init() {
+	plugin := NewGoPlugin(nil)
+	err := core.GetPluginRegistry().RegisterPlugin(plugin.Language(), plugin)
+	if err != nil {
+		logrus.Fatalf("Failed to register Go plugin: %v", err)
+	}
+}
+
 // APIVersion returns the plugin API version.
 func (p *GoPlugin) APIVersion() string {
 	return core.PluginAPIVersion

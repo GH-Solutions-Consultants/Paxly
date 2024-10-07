@@ -9,7 +9,6 @@ require (
     github.com/sirupsen/logrus v1.9.3
     github.com/spf13/cobra v1.7.0
     github.com/stretchr/testify v1.8.4
-    gopkg.in/yaml.v2 v2.4.0
     gopkg.in/yaml.v3 v3.0.1
     github.com/GH-Solutions-Consultants/Paxly/core v0.0.0
 )
