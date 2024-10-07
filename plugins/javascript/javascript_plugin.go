@@ -72,7 +72,7 @@ func (p *JavaScriptPlugin) Install(deps []core.Dependency) error {
 			Name: "npm",
 			Args: []string{"install", pkgStr},
 		}
-		err := p.executor.Run(&cmd)
+		err := p.executor.Run(&cmd) // Correct assignment
 		if err != nil {
 			logrus.Errorf("Failed to install JavaScript package '%s': %v", dep.Name, err)
 			return err
@@ -98,7 +98,7 @@ func (p *JavaScriptPlugin) Update(deps []core.Dependency) error {
 			Name: "npm",
 			Args: []string{"install", pkgStr},
 		}
-		err := p.executor.Run(&cmd)
+		err := p.executor.Run(&cmd) // Correct assignment
 		if err != nil {
 			logrus.Errorf("Failed to update JavaScript package '%s': %v", dep.Name, err)
 			return err
@@ -120,7 +120,7 @@ func (p *JavaScriptPlugin) Remove(dep core.Dependency) error {
 		Name: "npm",
 		Args: []string{"uninstall", pkgStr},
 	}
-	err := p.executor.Run(&cmd)
+	err := p.executor.Run(&cmd) // Correct assignment
 	if err != nil {
 		logrus.Errorf("Failed to remove JavaScript package '%s': %v", dep.Name, err)
 		return err
