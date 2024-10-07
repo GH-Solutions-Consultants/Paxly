@@ -42,8 +42,9 @@ func (p *RustPlugin) Language() string {
 func (p *RustPlugin) Initialize(config core.Config) error {
 	logrus.Info("Initializing Rust plugin...")
 	// Validate cargo installation
-	if _, err := p.executor.Run(&core.Command{Name: "cargo", Args: []string{"--version"}}); err != nil {
-		return fmt.Errorf("cargo is not installed or not in PATH")
+	err := p.executor.Run(&core.Command{Name: "cargo", Args: []string{"--version"}})
+	if err != nil {
+		return fmt.Errorf("cargo is not installed or not in PATH: %v", err)
 	}
 	// Ensure cargo-edit is installed
 	cmd := &core.Command{
@@ -54,17 +55,17 @@ func (p *RustPlugin) Initialize(config core.Config) error {
 		return fmt.Errorf("failed to install cargo-edit: %v", err)
 	}
 	// Ensure Cargo.toml exists; if not, initialize it
-	_, err := p.executor.Output(&core.Command{
+	_, err = p.executor.Output(&core.Command{
 		Name: "cargo",
 		Args: []string{"metadata", "--format-version", "1"},
 	})
 	if err != nil {
 		logrus.Info("Cargo.toml not found. Initializing Cargo project...")
-		cmd := &core.Command{
+		initCmd := &core.Command{
 			Name: "cargo",
 			Args: []string{"init"},
 		}
-		if err := p.executor.Run(cmd); err != nil {
+		if err := p.executor.Run(initCmd); err != nil {
 			return fmt.Errorf("failed to initialize Cargo project: %v", err)
 		}
 	}
@@ -74,7 +75,6 @@ func (p *RustPlugin) Initialize(config core.Config) error {
 // Install installs the specified Rust dependencies.
 func (p *RustPlugin) Install(deps []core.Dependency) error {
 	for _, dep := range deps {
-		pkgStr := fmt.Sprintf("%s%s", dep.Name, dep.Version)
 		logrus.WithFields(logrus.Fields{
 			"dependency": dep.Name,
 			"version":    dep.Version,
@@ -109,7 +109,6 @@ func (p *RustPlugin) Install(deps []core.Dependency) error {
 // Update updates the specified Rust dependencies.
 func (p *RustPlugin) Update(deps []core.Dependency) error {
 	for _, dep := range deps {
-		pkgStr := fmt.Sprintf("%s%s", dep.Name, dep.Version)
 		logrus.WithFields(logrus.Fields{
 			"dependency": dep.Name,
 			"version":    dep.Version,
@@ -143,7 +142,6 @@ func (p *RustPlugin) Update(deps []core.Dependency) error {
 
 // Remove removes the specified Rust dependency.
 func (p *RustPlugin) Remove(dep core.Dependency) error {
-	pkgStr := dep.Name
 	logrus.WithFields(logrus.Fields{
 		"dependency": dep.Name,
 	}).Info("Removing Rust package")
@@ -302,15 +300,6 @@ func (p *RustPlugin) Cleanup() error {
 	logrus.Info("Cleaning up Rust plugin resources...")
 	// Implement any necessary cleanup
 	return nil
-}
-
-// runGoModTidy runs 'go mod tidy' to clean up dependencies.
-func (p *RustPlugin) runGoModTidy() error {
-	cmd := &core.Command{
-		Name: "go",
-		Args: []string{"mod", "tidy"},
-	}
-	return p.executor.Run(cmd)
 }
 
 // addDependencyToCargoToml adds a dependency to Cargo.toml
