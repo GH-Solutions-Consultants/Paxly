@@ -70,7 +70,7 @@ var addCmd = &cobra.Command{
 func init() {
 	addCmd.Flags().StringVarP(&addLanguage, "language", "l", "", "Programming language of the dependency")
 	addCmd.Flags().StringVarP(&addName, "name", "n", "", "Name of the dependency")
-	addCmd.Flags().StringVarP(&addVersion, "version", "v", "", "Version constraint of the dependency")
+	addCmd.Flags().StringVarP(&addVersion, "version", "r", "", "Version constraint of the dependency")
 	addCmd.MarkFlagRequired("language")
 	addCmd.MarkFlagRequired("name")
 	addCmd.MarkFlagRequired("version")

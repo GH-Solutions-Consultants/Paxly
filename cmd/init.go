@@ -29,8 +29,9 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 
 	initCmd.Flags().StringVarP(&projectName, "name", "n", "", "Name of the project")
-	initCmd.Flags().StringVarP(&projectVersion, "version", "v", "1.0.0", "Version of the project")
-	initCmd.Flags().StringVarP(&projectDescription, "description", "d", "", "Description of the project")
+	// Change the shorthand for the version flag from 'v' to something else, e.g., 'r'
+	initCmd.Flags().StringVarP(&projectVersion, "version", "r", "1.0.0", "Version of the project")
+	initCmd.Flags().StringVarP(&projectDescription, "description", "s", "", "Description of the project")
 	initCmd.Flags().StringSliceVarP(&projectAuthors, "authors", "a", []string{}, "Authors of the project (format: 'Name <email>')")
 
 	initCmd.MarkFlagRequired("name")

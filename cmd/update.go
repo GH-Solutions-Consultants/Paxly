@@ -4,11 +4,11 @@ package cmd
 import (
 	"os"
 
-	"github.com/GH-Solutions-Consultants/Paxly/core"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/GH-Solutions-Consultants/Paxly/core"
 	"gopkg.in/yaml.v2"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -20,26 +20,26 @@ var (
 		Short: "Update a dependency in the project",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Read config
-			data, err := os.ReadFile("paxly.yaml")
+			data, err := os.ReadFile("pkgmgr.yaml")
 			if err != nil {
-				logrus.Fatal(errors.Wrap(err, "failed to read paxly.yaml"))
+				core.LogFatal(errors.Wrap(err, "failed to read pkgmgr.yaml"))
 			}
 
 			var config core.Config
 			err = yaml.Unmarshal(data, &config)
 			if err != nil {
-				logrus.Fatal(errors.Wrap(err, "failed to parse paxly.yaml"))
+				core.LogFatal(errors.Wrap(err, "failed to parse pkgmgr.yaml"))
 			}
 
 			// Validate configuration
 			if err := config.Validate(); err != nil {
-				logrus.Fatal(errors.Wrap(err, "configuration validation failed"))
+				core.LogFatal(errors.Wrap(err, "configuration validation failed"))
 			}
 
 			// Update dependency
 			envConfig, exists := config.Environments["development"]
 			if !exists {
-				logrus.Fatal(errors.Errorf("environment 'development' does not exist"))
+				core.LogFatal(errors.Errorf("environment 'development' does not exist"))
 			}
 
 			deps, exists := envConfig.Dependencies[updateLanguage]
@@ -52,7 +52,7 @@ var (
 				if dep.Name == updateName {
 					deps[i].Version = updateVersion
 					if err := deps[i].Validate(); err != nil {
-						logrus.Fatal(errors.Wrap(err, "invalid version constraint"))
+						core.LogFatal(errors.Wrap(err, "invalid version constraint"))
 					}
 					found = true
 					break
@@ -60,7 +60,7 @@ var (
 			}
 
 			if !found {
-				logrus.Fatal(errors.Errorf("dependency '%s' not found in language '%s'", updateName, updateLanguage))
+				core.LogFatal(errors.Errorf("dependency '%s' not found in language '%s'", updateName, updateLanguage))
 			}
 
 			config.Environments["development"].Dependencies[updateLanguage] = deps
@@ -68,14 +68,16 @@ var (
 			// Marshal back to YAML
 			updatedData, err := yaml.Marshal(&config)
 			if err != nil {
-				logrus.Fatal(errors.Wrap(err, "failed to marshal updated configuration"))
+				core.LogFatal(errors.Wrap(err, "failed to marshal updated configuration"))
 			}
 
-			// Write back to paxly.yaml
-			err = os.WriteFile("paxly.yaml", updatedData, 0644)
+			// Write back to pkgmgr.yaml
+			err = os.WriteFile("pkgmgr.yaml", updatedData, 0644)
 			if err != nil {
-				logrus.Fatal(errors.Wrap(err, "failed to write updated paxly.yaml"))
+				core.LogFatal(errors.Wrap(err, "failed to write updated pkgmgr.yaml"))
 			}
+
+			// Replace core.LogInfo with logrus.Info
 			logrus.Infof("Successfully updated dependency '%s' to version '%s' in language '%s'", updateName, updateVersion, updateLanguage)
 		},
 	}
