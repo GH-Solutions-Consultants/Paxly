@@ -1,0 +1,48 @@
+# pkgmgr.yaml
+project:
+  name: my-multi-language-project
+  version: 1.0.0
+  description: "A project using Python, JavaScript, Go, and Rust."
+  authors:
+    - name: "Your Name"
+      email: "you@example.com"
+
+environments:
+  development:
+    dependencies:
+      python:
+        - name: requests
+          version: "^2.28"
+      javascript:
+        - name: express
+          version: "^4.17.1"
+      go:
+        - name: github.com/gin-gonic/gin
+          version: "^1.7.4"
+      rust:
+        - name: serde
+          version: "^1.0"
+  production:
+    dependencies:
+      python:
+        - name: requests
+          version: "^2.28"
+      javascript:
+        - name: express
+          version: "^4.17.1"
+      go:
+        - name: github.com/gin-gonic/gin
+          version: "^1.7.4"
+      rust:
+        - name: serde
+          version: "^1.0"
+
+trusted_sources:
+  python:
+    - "https://pypi.org/simple"
+  javascript:
+    - "https://registry.npmjs.org/"
+  go:
+    - "https://proxy.golang.org/"
+  rust:
+    - "https://crates.io/"
