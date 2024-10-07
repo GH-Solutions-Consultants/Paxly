@@ -11,7 +11,12 @@ require (
     github.com/stretchr/testify v1.8.4
     gopkg.in/yaml.v2 v2.4.0
     gopkg.in/yaml.v3 v3.0.1
-    github.com/GH-Solutions-Consultants/Paxly/core v0.0.0
+
+    // Require plugin modules with pseudo-versions
+    github.com/GH-Solutions-Consultants/Paxly/plugins/go_plugin v0.0.0-00010101000000-000000000000
+    github.com/GH-Solutions-Consultants/Paxly/plugins/javascript_plugin v0.0.0-00010101000000-000000000000
+    github.com/GH-Solutions-Consultants/Paxly/plugins/python_plugin v0.0.0-00010101000000-000000000000
+    github.com/GH-Solutions-Consultants/Paxly/plugins/rust_plugin v0.0.0-00010101000000-000000000000
 )
 
 replace github.com/GH-Solutions-Consultants/Paxly/core => ./core
