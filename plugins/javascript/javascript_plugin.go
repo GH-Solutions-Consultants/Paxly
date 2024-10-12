@@ -194,48 +194,38 @@ func (p *JavaScriptPlugin) ListVersions(depName string) ([]string, error) {
 
 // GetTransitiveDependencies fetches transitive dependencies for a given dependency.
 func (p *JavaScriptPlugin) GetTransitiveDependencies(depName, version string) ([]core.Dependency, error) {
-	// Use 'npm ls <depName> --json' to get dependencies
-	cmd := core.Command{
-		Name: "npm",
-		Args: []string{"ls", depName, "--json"},
-	}
-	output, err := p.executor.Output(&cmd)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list dependencies for '%s': %v", depName, err)
-	}
+    logrus.Infof("Running 'npm ls' for package %s", depName)
+    cmd := core.Command{
+        Name: "npm",
+        Args: []string{"ls", depName, "--json", "--depth=0"},
+    }
+    output, err := p.executor.Output(&cmd)
+    if err != nil {
+        logrus.Warnf("Failed to list dependencies for '%s', skipping transitive dependencies: %v", depName, err)
+        logrus.Warnf("Output: %s", string(output))
+        return []core.Dependency{}, nil
+    }
 
-	// Define the structure for parsing the npm ls output
-	var lsOutput struct {
-		Dependencies map[string]struct {
-			Version         string                 `json:"version"`
-			Dependencies    map[string]interface{} `json:"dependencies"`
-			DevDependencies map[string]interface{} `json:"devDependencies"`
-		} `json:"dependencies"`
-	}
+    // Parse the output
+    var lsOutput struct {
+        Dependencies map[string]struct {
+            Version string `json:"version"`
+        } `json:"dependencies"`
+    }
+    if err := json.Unmarshal(output, &lsOutput); err != nil {
+        logrus.Warnf("Failed to parse npm ls output for '%s', skipping transitive dependencies: %v", depName, err)
+        return []core.Dependency{}, nil
+    }
 
-	// Unmarshal the JSON output from the npm ls command
-	if err := json.Unmarshal(output, &lsOutput); err != nil {
-		return nil, fmt.Errorf("failed to parse npm ls output: %v", err)
-	}
+    var transDeps []core.Dependency
+    for name, info := range lsOutput.Dependencies {
+        transDeps = append(transDeps, core.Dependency{
+            Name:    name,
+            Version: "=" + info.Version,
+        })
+    }
 
-	// Collect transitive dependencies
-	transDeps := []core.Dependency{}
-	if depEntry, ok := lsOutput.Dependencies[depName]; ok {
-		if deps := depEntry.Dependencies; deps != nil {
-			for name, info := range deps {
-				version, ok := info.(map[string]interface{})["version"].(string)
-				if !ok {
-					continue
-				}
-				transDeps = append(transDeps, core.Dependency{
-					Name:    name,
-					Version: "=" + version,
-				})
-			}
-		}
-	}
-
-	return transDeps, nil
+    return transDeps, nil
 }
 
 // GetVulnerabilities retrieves security vulnerabilities using 'npm audit --json'.

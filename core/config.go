@@ -35,28 +35,30 @@ type Author struct {
 
 // Validate parses and validates the entire configuration.
 func (c *Config) Validate() error {
-	validate := validator.New()
-	// Register custom validation
-	validate.RegisterValidation("semver", validateSemVer)
+    validate := validator.New()
+    validate.RegisterValidation("semver", validateSemVer)
 
-	// Validate Project
-	if err := validate.Struct(c.Project); err != nil {
-		return err
-	}
+    // Validate Project Config
+    if err := validate.Struct(c.Project); err != nil {
+        return err
+    }
 
-	// Validate Environments
-	for envName, envConfig := range c.Environments {
-		if err := validate.Struct(envConfig); err != nil {
-			return fmt.Errorf("validation failed for environment '%s': %v", envName, err)
-		}
-		for lang, deps := range envConfig.Dependencies {
-			for _, dep := range deps {
-				if err := dep.Validate(); err != nil {
-					return fmt.Errorf("invalid dependency '%s' in environment '%s', language '%s': %v", dep.Name, envName, lang, err)
-				}
-			}
-		}
-	}
+    // Validate Environments
+    for envName, envConfig := range c.Environments {
+        if err := validate.Struct(envConfig); err != nil {
+            return fmt.Errorf("validation failed for environment '%s': %v", envName, err)
+        }
 
-	return nil
+        // Validate Dependencies
+        for lang, deps := range envConfig.Dependencies {
+            for i := range deps { // Use index to get pointer
+                dep := &deps[i] // Get pointer to the actual slice element
+                if err := dep.Validate(); err != nil {
+                    return fmt.Errorf("invalid dependency '%s' in environment '%s', language '%s': %v", dep.Name, envName, lang, err)
+                }
+            }
+        }
+    }
+
+    return nil
 }

@@ -6,10 +6,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+    "net/http"
+    "sort"
+    "time"
 
 	"github.com/GH-Solutions-Consultants/Paxly/core"
 	"github.com/sirupsen/logrus"
+    "github.com/Masterminds/semver/v3"
 )
 
 // Ensure the PythonPlugin implements the PackageManagerPlugin interface.
@@ -39,6 +44,24 @@ func NewPythonPlugin(executor core.Executor) *PythonPlugin {
 	}
 }
 
+// getPythonPath determines the appropriate Python executable based on the OS.
+func (p *PythonPlugin) getPythonPath() string {
+    var pythonPath string
+    if runtime.GOOS == "windows" {
+        pythonPath = filepath.Join("venv", "Scripts", "python.exe")
+    } else {
+        pythonPath = filepath.Join("venv", "bin", "python3")
+    }
+    if _, err := os.Stat(pythonPath); err == nil {
+        return pythonPath
+    }
+    // Fallback to system python
+    if runtime.GOOS == "windows" {
+        return "python"
+    }
+    return "python3"
+}
+
 // APIVersion returns the plugin API version.
 func (p *PythonPlugin) APIVersion() string {
 	return core.PluginAPIVersion
@@ -52,13 +75,18 @@ func (p *PythonPlugin) Language() string {
 // Initialize sets up the Python plugin with necessary configurations.
 func (p *PythonPlugin) Initialize(config core.Config) error {
 	logrus.Info("Initializing Python plugin...")
+	pythonCmd := p.getPythonPath()
+
 	// Validate Python installation
-	if err := p.executor.Run(&core.Command{Name: "python3", Args: []string{"--version"}}); err != nil {
-		return fmt.Errorf("python3 is not installed or not in PATH")
+	if err := p.executor.Run(&core.Command{Name: pythonCmd, Args: []string{"--version"}}); err != nil {
+		return fmt.Errorf("%s is not installed or not in PATH", pythonCmd)
 	}
-	if err := p.executor.Run(&core.Command{Name: p.getPipPath(), Args: []string{"--version"}}); err != nil {
+
+	pipPath := p.getPipPath()
+	if err := p.executor.Run(&core.Command{Name: pipPath, Args: []string{"--version"}}); err != nil {
 		return fmt.Errorf("pip is not installed or not in PATH")
 	}
+
 	// Ensure pipdeptree is installed
 	if err := p.ensurePipDeptree(); err != nil {
 		return err
@@ -66,7 +94,7 @@ func (p *PythonPlugin) Initialize(config core.Config) error {
 	return nil
 }
 
-// ensurePipDeptree ensures that pipdeptree is installed in the virtual environment.
+// ensurePipDeptree ensures that pipdeptree is installed.
 func (p *PythonPlugin) ensurePipDeptree() error {
 	cmd := &core.Command{
 		Name: p.getPipPath(),
@@ -80,15 +108,25 @@ func (p *PythonPlugin) ensurePipDeptree() error {
 
 // getPipPath returns the path to the pip executable, handling cross-platform paths.
 func (p *PythonPlugin) getPipPath() string {
-	if core.IsWindows() {
-		return filepath.Join("venv", "Scripts", "pip.exe")
-	}
-	return filepath.Join("venv", "bin", "pip")
+    var pipPath string
+    if runtime.GOOS == "windows" {
+        pipPath = filepath.Join("venv", "Scripts", "pip.exe")
+    } else {
+        pipPath = filepath.Join("venv", "bin", "pip3")
+    }
+    if _, err := os.Stat(pipPath); err == nil {
+        return pipPath
+    }
+    // Fallback to system pip
+    if runtime.GOOS == "windows" {
+        return "pip"
+    }
+    return "pip3"
 }
 
 // getSafetyPath returns the path to the safety executable, handling cross-platform paths.
 func (p *PythonPlugin) getSafetyPath() string {
-	if core.IsWindows() {
+	if runtime.GOOS == "windows" {
 		return filepath.Join("venv", "Scripts", "safety.exe")
 	}
 	return filepath.Join("venv", "bin", "safety")
@@ -101,7 +139,7 @@ func (p *PythonPlugin) Install(deps []core.Dependency) error {
 	if os.IsNotExist(err) {
 		logrus.Info("Creating Python virtual environment...")
 		cmd := &core.Command{
-			Name: "python3",
+			Name: p.getPythonPath(),
 			Args: []string{"-m", "venv", "venv"},
 		}
 		if err := p.executor.Run(cmd); err != nil {
@@ -203,13 +241,15 @@ func (p *PythonPlugin) Remove(dep core.Dependency) error {
 
 // List lists all installed Python dependencies.
 func (p *PythonPlugin) List() ([]core.Dependency, error) {
+	logrus.Infof("Running 'pip freeze' to list dependencies")
 	cmd := &core.Command{
 		Name: p.getPipPath(),
 		Args: []string{"freeze"},
 	}
 	output, err := p.executor.Output(cmd)
 	if err != nil {
-		return nil, err
+		logrus.Errorf("Failed to run 'pip freeze': %v", err)
+		return nil, fmt.Errorf("failed to list Python dependencies: %v", err)
 	}
 
 	deps := []core.Dependency{}
@@ -231,39 +271,82 @@ func (p *PythonPlugin) List() ([]core.Dependency, error) {
 	return deps, nil
 }
 
-// ListVersions lists all available versions for a given Python package.
 func (p *PythonPlugin) ListVersions(depName string) ([]string, error) {
-	cmd := &core.Command{
-		Name: p.getPipPath(),
-		Args: []string{"install", fmt.Sprintf("%s==random", depName)}, // Intentional error to get available versions
-	}
+    url := fmt.Sprintf("https://pypi.org/pypi/%s/json", depName)
+    client := &http.Client{
+        Timeout: 10 * time.Second,
+    }
+    logrus.Debugf("Fetching package info from PyPI: %s", url)
+    resp, err := client.Get(url)
+    if err != nil {
+        logrus.Errorf("HTTP request failed: %v", err)
+        return nil, fmt.Errorf("failed to fetch package info from PyPI for '%s': %v", depName, err)
+    }
+    defer resp.Body.Close()
 
-	output, err := p.executor.Output(cmd)
-	if err == nil {
-		return nil, fmt.Errorf("expected failure when listing versions")
-	}
+    logrus.Debugf("Received response: Status Code %d", resp.StatusCode)
+    if resp.StatusCode != http.StatusOK {
+        logrus.Errorf("Non-OK HTTP status: %d", resp.StatusCode)
+        return nil, fmt.Errorf("failed to fetch package info from PyPI for '%s': Status Code %d", depName, resp.StatusCode)
+    }
 
-	outputStr := string(output)
-	// Parse available versions from error message
-	versions := []string{}
-	prefix := "(from versions:"
-	suffix := ")"
-	start := strings.Index(outputStr, prefix)
-	if start == -1 {
-		return nil, fmt.Errorf("failed to parse available versions")
-	}
-	start += len(prefix)
-	end := strings.Index(outputStr[start:], suffix)
-	if end == -1 {
-		return nil, fmt.Errorf("failed to parse available versions")
-	}
-	versionStr := outputStr[start : start+end]
-	versionParts := strings.Split(versionStr, ",")
-	for _, v := range versionParts {
-		v = strings.TrimSpace(v)
-		versions = append(versions, v)
-	}
-	return versions, nil
+    var data struct {
+        Releases map[string][]interface{} `json:"releases"`
+    }
+    if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+        logrus.Errorf("JSON decoding failed: %v", err)
+        return nil, fmt.Errorf("failed to parse PyPI response for '%s': %v", depName, err)
+    }
+
+    versions := make([]string, 0, len(data.Releases))
+    for version := range data.Releases {
+        versions = append(versions, version)
+    }
+
+    logrus.Debugf("Fetched versions for '%s': %v", depName, versions)
+
+    // Sort versions in ascending order
+    sort.Slice(versions, func(i, j int) bool {
+        vi, err1 := semver.NewVersion(versions[i])
+        vj, err2 := semver.NewVersion(versions[j])
+        if err1 != nil || err2 != nil {
+            // Fallback to string comparison if semver parsing fails
+            return versions[i] < versions[j]
+        }
+        return vi.LessThan(vj)
+    })
+
+    logrus.Debugf("Sorted versions for '%s': %v", depName, versions)
+
+    if len(versions) == 0 {
+        logrus.Error("No versions found for the package")
+        return nil, fmt.Errorf("no versions found for '%s'", depName)
+    }
+
+    return versions, nil
+}
+
+
+
+// Helper function to parse 'pip index versions' plain text output
+func parsePipIndexVersionsOutput(output []byte) ([]string, error) {
+    outputStr := string(output)
+    lines := strings.Split(outputStr, "\n")
+    var versions []string
+    for _, line := range lines {
+        line = strings.TrimSpace(line)
+        if strings.HasPrefix(line, "* ") {
+            version := strings.TrimPrefix(line, "* ")
+            version = strings.TrimSpace(version)
+            if version != "" {
+                versions = append(versions, version)
+            }
+        }
+    }
+    if len(versions) == 0 {
+        return nil, fmt.Errorf("no versions found in the output")
+    }
+    return versions, nil
 }
 
 // GetTransitiveDependencies fetches transitive dependencies for a given dependency.
