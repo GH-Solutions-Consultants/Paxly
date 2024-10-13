@@ -12,11 +12,10 @@ Paxly is a powerful, multi-language package manager that simplifies dependency m
 - **Parallel Installations**: Boost installation speed with concurrent operations, reducing setup time.
 - **Efficient Caching**: Cache downloaded packages to prevent redundant downloads and speed up future installations.
 - **Security Integrations**: Identify vulnerabilities in your dependencies with built-in security scans.
-- **Cross-Platform Compatibility**: Paxly runs smoothly on Windows, macOS, and Linux.
+- **Cross-Platform Compatibility**: Paxly runs smoothly on Windows, and Linux.
 - **Comprehensive Logging**: Gain insights into Paxly's processes with detailed logging and customizable verbosity levels.
 - **Interactive CLI Mode**: Use Paxly interactively via its built-in shell for efficient dependency management.
-- **Dependency Graph Visualization**: Visualize dependency relationships in your projects with Graphviz integration.
-- **Plugin Marketplace**: Share and explore plugins developed by the community to extend Paxly's capabilities.
+- **Dependency Graph Visualization**: Visualize dependency relationships in your projects with Graphviz integration (Not available yet).
 
 🛠 **Installation**
 
@@ -129,10 +128,6 @@ Paxly's plugin system allows you to extend support for additional programming la
 1. Implement the `PackageManagerPlugin` interface.
 2. Register your plugin using `core.GetPluginRegistry().RegisterPlugin(...)`.
 3. Rebuild Paxly to use your custom plugin.
-
-### Plugin Marketplace
-
-Browse and share Paxly plugins in the community plugin marketplace. This marketplace provides a collection of user-developed plugins for adding new features or languages.
 
 🛡 **Security and Best Practices**
 
