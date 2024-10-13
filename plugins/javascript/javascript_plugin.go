@@ -263,10 +263,10 @@ func (p *JavaScriptPlugin) GetVulnerabilities() ([]core.SecurityVulnerability, e
 	vulns := []core.SecurityVulnerability{}
 	for _, vuln := range auditOutput.Vulnerabilities {
 		vulns = append(vulns, core.SecurityVulnerability{
-			Package:       vuln.ModuleName,
-			Vulnerability: vuln.Title,
-			Severity:      vuln.Severity,
-			Description:   vuln.Overview,
+			PackageName:     vuln.ModuleName,
+			VulnerabilityID: vuln.Title,
+			Severity:        vuln.Severity,
+			Description:     vuln.Overview,
 		})
 	}
 

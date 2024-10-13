@@ -1,39 +1,40 @@
 // core/config.go
+
 package core
 
 import (
-	"fmt"
-
-	"github.com/go-playground/validator/v10"
+    "fmt"
+    "github.com/go-playground/validator/v10"
+    "github.com/sirupsen/logrus"
 )
 
-// Config represents the entire project configuration.
+// Config represents the overall configuration.
 type Config struct {
-	Project        ProjectConfig                `yaml:"project" validate:"required,dive"`
-	Environments   map[string]EnvironmentConfig `yaml:"environments" validate:"required,dive"`
-	TrustedSources map[string][]string          `yaml:"trusted_sources" validate:"required,dive,dive,uri"`
+    Project        ProjectConfig                `yaml:"project" validate:"required,dive"`
+    Environments   map[string]EnvironmentConfig `yaml:"environments" validate:"required,dive"`
+    TrustedSources map[string][]string          `yaml:"trusted_sources" validate:"required,dive,dive,uri"`
 }
 
-// EnvironmentConfig holds dependencies for a specific environment.
+// EnvironmentConfig represents the configuration for a specific environment.
 type EnvironmentConfig struct {
-	Dependencies map[string][]Dependency `yaml:"dependencies" validate:"required,dive,dive"`
+    Dependencies map[string][]Dependency `yaml:"dependencies" validate:"required,dive,dive"`
 }
 
-// ProjectConfig holds project metadata.
+// ProjectConfig represents the project-specific configuration.
 type ProjectConfig struct {
-	Name        string   `yaml:"name" validate:"required"`
-	Version     string   `yaml:"version" validate:"required,semver"`
-	Description string   `yaml:"description"`
-	Authors     []Author `yaml:"authors" validate:"dive"`
+    Name        string   `yaml:"name" validate:"required"`
+    Version     string   `yaml:"version" validate:"required,semver"`
+    Description string   `yaml:"description"`
+    Authors     []Author `yaml:"authors" validate:"dive"`
 }
 
-// Author represents a project author.
+// Author represents an author of the project.
 type Author struct {
-	Name  string `yaml:"name" validate:"required"`
-	Email string `yaml:"email" validate:"required,email"`
+    Name  string `yaml:"name" validate:"required"`
+    Email string `yaml:"email" validate:"required,email"`
 }
 
-// Validate parses and validates the entire configuration.
+// Validate validates the entire configuration.
 func (c *Config) Validate() error {
     validate := validator.New()
     validate.RegisterValidation("semver", validateSemVer)
@@ -56,6 +57,8 @@ func (c *Config) Validate() error {
                 if err := dep.Validate(); err != nil {
                     return fmt.Errorf("invalid dependency '%s' in environment '%s', language '%s': %v", dep.Name, envName, lang, err)
                 }
+                // Debug log to confirm Constraint is set
+                logrus.Debugf("Dependency '%s' in language '%s' has constraint '%s'", dep.Name, lang, dep.Constraint.String())
             }
         }
     }

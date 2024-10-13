@@ -1,10 +1,11 @@
 // core/security.go
 package core
 
-// SecurityVulnerability represents a security issue found in a dependency.
+// SecurityVulnerability represents a security vulnerability in a package
 type SecurityVulnerability struct {
-	Package       string `json:"package"`
-	Vulnerability string `json:"vulnerability"`
-	Severity      string `json:"severity,omitempty"`
-	Description   string `json:"description,omitempty"`
+    PackageName     string
+    VulnerabilityID string
+    Description     string
+    Severity        string
 }
+

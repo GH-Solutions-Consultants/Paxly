@@ -207,7 +207,7 @@ func GenerateSecurityReport(reports []SecurityReport, format, outputPath string)
 			}
 			buffer.WriteString("<ul>")
 			for _, vuln := range report.Vulnerabilities {
-				buffer.WriteString(fmt.Sprintf("<li><strong>%s:</strong> %s (Severity: %s)</li>", vuln.Package, vuln.Vulnerability, vuln.Severity))
+				buffer.WriteString(fmt.Sprintf("<li><strong>%s:</strong> %s (Severity: %s)</li>", vuln.PackageName, vuln.VulnerabilityID, vuln.Severity))
 			}
 			buffer.WriteString("</ul>")
 		}
@@ -225,3 +225,4 @@ func GenerateSecurityReport(reports []SecurityReport, format, outputPath string)
 	logrus.Infof("Security report generated at '%s'", outputPath)
 	return nil
 }
+

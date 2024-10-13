@@ -276,7 +276,7 @@ func (p *RustPlugin) RunSecurityScan() error {
 	if len(auditResults) > 0 {
 		logrus.Warn("Vulnerabilities detected in Rust dependencies:")
 		for _, vuln := range auditResults {
-			logrus.Warnf("- %s: %s", vuln.Package, vuln.Vulnerability)
+			logrus.Warnf("- %s: %s", vuln.PackageName, vuln.VulnerabilityID)
 		}
 	} else {
 		logrus.Info("No vulnerabilities found in Rust dependencies.")
