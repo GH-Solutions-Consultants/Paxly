@@ -17,6 +17,8 @@ Paxly is a powerful, multi-language package manager that simplifies dependency m
 - **Interactive CLI Mode**: Use Paxly interactively via its built-in shell for efficient dependency management.
 - **Dependency Graph Visualization**: Visualize dependency relationships in your projects with Graphviz integration (Not available yet).
 
+![Recording 2024-10-14 211425 mp4](https://github.com/user-attachments/assets/c60f4a5d-097b-456f-a461-1b6b6e41c851)
+
 🛠 **Installation**
 
 ### Prerequisites
